@@ -65,9 +65,8 @@ class ViewModel {
         cell.selectedBackgroundView = UIView()
         cell.videoPlayerNameLabel.text = getCustomCell.videoPlayer?.name
         cell.videoPlayerImageView.onLoad(url: URL(string: getCustomCell.videoPlayer!.image)!)
+         
         return cell
     }
-    
-    
     
 }

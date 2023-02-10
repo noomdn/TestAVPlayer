@@ -12,13 +12,19 @@ import AVKit
 // video: https://wolverine.raywenderlich.com/content/ios/tutorials/video_streaming/foxVillage.mp4
 // video: https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8
 
+protocol ViewControllerDelegate:AnyObject {
+    func selectedItem(selectedAt:Int)
+}
+
 class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
     
     @IBOutlet weak var contentView: UIView!
     
-    var playUrlDefault = "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8"
+    public weak var viewControllerDelegate: ViewControllerDelegate?
     
-     var player: AVPlayer?
+    var player: AVPlayer?
+    var currentPlayVideo:Int = 0
+    var playuerURLs = [String]()
     let viewModel = ViewModel()
     
     // video player layer
@@ -54,7 +60,7 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         btnConfig.background.backgroundColor = .clear
         let btn = UIButton()
         btn.configuration = btnConfig
-        btn.alpha = 0.0
+        btn.addTarget(self, action: #selector(didNextVideo), for: .touchUpInside)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
@@ -66,7 +72,7 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         btnConfig.background.backgroundColor = .clear
         let btn = UIButton()
         btn.configuration = btnConfig
-        btn.alpha = 0.0
+        btn.addTarget(self, action: #selector(didPreviosVideo), for: .touchUpInside)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
@@ -96,22 +102,20 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
       
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupAudio()
     }
      
     // hidden animate
-    func onHiddenToolsbar(){
-        self.toolsBar.alpha = 1.0
-        UIView.animate(withDuration: 0.2 ,delay: 2.0 ,options: .curveEaseOut) {
-            self.toolsBar.alpha = 0.0
-        } completion: { isSuccess in
-            self.toolsBar.alpha = 0.0
-        }
-    }
+//    func onHiddenToolsbar(){
+//        self.toolsBar.alpha = 1.0
+//        UIView.animate(withDuration: 0.2 ,delay: 2.0 ,options: .curveEaseOut) {
+//            self.toolsBar.alpha = 0.0
+//        } completion: { isSuccess in
+//            self.toolsBar.alpha = 0.0
+//        }
+//    }
     
     func setupAudio(){
-        
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playback, mode: .moviePlayback)
@@ -127,15 +131,15 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
     
     func setupController(){
         // setup playlayer
-        viewModel.renderVideoPlayer(playerUrl: playUrlDefault) { player in
-            
-            self.playLayer.player = player
-            self.playLayer.frame = self.contentView.bounds
-            
-            self.contentView.layer.addSublayer(self.playLayer)
-        } onError: { error in
-            debugPrint(error)
-        }
+//        viewModel.renderVideoPlayer(playerUrl: playUrlDefault) { player in
+//
+//            self.playLayer.player = player
+//            self.playLayer.frame = self.contentView.bounds
+//
+//            self.contentView.layer.addSublayer(self.playLayer)
+//        } onError: { error in
+//            debugPrint(error)
+//        }
 
         
         // setup tools bar
@@ -154,10 +158,7 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         let location = touch.location(in: self.toolsBar)
         if self.toolsBar.frame.contains(location) {
             // touch in the view
-            
-            if self.toolsBar.alpha == 0.0 {
-                self.toolsBar.alpha = 1.0
-            }
+             
         }
     }
     
@@ -175,18 +176,37 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         playLayer.player?.pause()
         sender.addTarget(self, action: #selector(didPlayVideo), for: .touchUpInside)
         sender.configuration?.image = UIImage(systemName: "play.fill")
-        onHiddenToolsbar()
+        //onHiddenToolsbar()
     }
      
     @objc func didPlayVideo(sender:UIButton){
         onPlayVideo()
     }
     
+    
+    
+    @objc func didNextVideo(sender:UIButton){
+        if currentPlayVideo < self.playuerURLs.count {
+            currentPlayVideo = currentPlayVideo + 1
+            print("currentPlayVideo: ",currentPlayVideo)
+        }
+         
+        //viewControllerDelegate?.selectedItem(selectedAt: currentPlayVideo)
+    }
+    
+    @objc func didPreviosVideo(){
+        if currentPlayVideo > 0 {
+            currentPlayVideo = currentPlayVideo - 1
+            print("currentPlayVideo: ",currentPlayVideo)
+        }
+        
+    }
+    
     func onPlayVideo(){
         playLayer.player?.play()
         self.playButton.addTarget(self, action: #selector(didPauseVideo), for: .touchUpInside)
         self.playButton.configuration?.image = UIImage(systemName: "pause.fill")
-        onHiddenToolsbar()
+        //onHiddenToolsbar()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -195,14 +215,21 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
             vc.viewTableViewControllerDelegate = self
         }
     }
-    
 }
 
 
 extension ViewController: ViewTableViewControllerDelegate {
     
-    func onLoadVideo(playerURL:[String]){
-        dump( playerURL )
+    func onLoadVideo(playerURLs:[String]){
+        self.playuerURLs = playerURLs
+        
+        viewModel.renderVideoPlayer(playerUrl: playerURLs.first!) { player in
+            self.playLayer.player = player
+            self.playLayer.frame = self.contentView.bounds
+            self.contentView.layer.addSublayer(self.playLayer)
+        } onError: { error in
+            debugPrint(error)
+        }
     }
     
     func selectedVideo(playerURL: String) {
@@ -213,9 +240,7 @@ extension ViewController: ViewTableViewControllerDelegate {
         playButton.configuration?.showsActivityIndicator = true
         playButton.configuration?.background.image = UIImage()
         
-        if toolsBar.alpha == 0.0 {
-            toolsBar.alpha = 1.0
-        }
+         
         
         //setup new video player
         viewModel.renderVideoPlayer(playerUrl: playerURL) { player in
