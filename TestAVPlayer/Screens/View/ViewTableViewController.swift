@@ -10,12 +10,13 @@ import Kingfisher
 
 protocol ViewTableViewControllerDelegate:AnyObject {
     func selectedVideo(playerURL:String)
-    func onLoadVideo(playerURL:[String])
+    func onLoadVideo(playerURLs:[String])
 }
 
 class ViewTableViewController: CustomTableViewController {
     
     public weak var viewTableViewControllerDelegate:ViewTableViewControllerDelegate?
+    var defaultSelected = 0
     var tableCell = [CustomCell]()
     let viewModel = ViewModel()
      
@@ -24,11 +25,14 @@ class ViewTableViewController: CustomTableViewController {
         super.viewDidLoad()
          
         viewModel.fetchVideoItem { videoItem in
+            var playerUrls = [String]()
             for item in videoItem {
+                playerUrls.append(item.urlPlayer)
                 let videoItemCell = VideoItemCustomCell(tableViewCell: VideoItemTableViewCell())
                 videoItemCell.videoPlayer = item
                 self.tableCell.append(videoItemCell)
-            }
+            }//end loop for
+            self.viewTableViewControllerDelegate?.onLoadVideo(playerURLs: playerUrls)
             self.tableView.reloadData()
         } error: { error in
             dump( error )
@@ -36,11 +40,18 @@ class ViewTableViewController: CustomTableViewController {
          
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+//        DispatchQueue.main.asyncAfter(wallDeadline: .now()+2, execute: { [self] in
+//            self.tableView(tableView, didSelectRowAt: IndexPath(row: 2, section: 0))
+//        })
+    }
+    
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
         return tableCell.count
     }
-
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let customCell = tableCell[indexPath.row]
@@ -59,17 +70,23 @@ class ViewTableViewController: CustomTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        if tableCell[indexPath.row] is VideoItemCustomCell {
+        print("== ViewTableViewController ==")
+        print(indexPath)
+        dump( tableCell.count )
+        if tableCell.indices.contains(indexPath.row) {
+            print("OK..")
             
-            let getCell = tableView.cellForRow(at: indexPath) as! VideoItemTableViewCell
-            getCell.setupPlaying()
-            
-            let getCustomCell = tableCell[indexPath.row] as! VideoItemCustomCell
-            
-            viewTableViewControllerDelegate?.selectedVideo(playerURL: getCustomCell.videoPlayer?.urlPlayer ?? "")
+            if tableCell[indexPath.row] is VideoItemCustomCell {
+                let getCell = tableView.cellForRow(at: indexPath) as! VideoItemTableViewCell
+                getCell.setupPlaying()
+                
+                let getCustomCell = tableCell[indexPath.row] as! VideoItemCustomCell
+                
+                viewTableViewControllerDelegate?.selectedVideo(playerURL: getCustomCell.videoPlayer?.urlPlayer ?? "")
+            }
+        } else {
+            print("not found item...")
         }
-        
     }
     
     
@@ -79,3 +96,4 @@ class ViewTableViewController: CustomTableViewController {
     }
 
 }
+
