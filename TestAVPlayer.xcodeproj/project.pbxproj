@@ -30,6 +30,10 @@
 		678FAA83299511450024A1F0 /* UIImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678FAA82299511450024A1F0 /* UIImageView.swift */; };
 		679560F92995F791001FE378 /* ToolsBarTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679560F72995F791001FE378 /* ToolsBarTableViewCell.swift */; };
 		679560FA2995F791001FE378 /* ToolsBarTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 679560F82995F791001FE378 /* ToolsBarTableViewCell.xib */; };
+		67BE896A299B211B006C80E2 /* NotificationName.enum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BE8969299B211B006C80E2 /* NotificationName.enum.swift */; };
+		67BE896D299B69F9006C80E2 /* ContentPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BE896C299B69F9006C80E2 /* ContentPlayerView.swift */; };
+		67BE896F299B6A11006C80E2 /* ContentPlayerView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 67BE896E299B6A11006C80E2 /* ContentPlayerView.xib */; };
+		67BE8971299B7049006C80E2 /* UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67BE8970299B7049006C80E2 /* UIView.swift */; };
 		B1B66BC2BBA4A788E6DD5B75 /* Pods_TestAVPlayer_TestAVPlayerUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 40471B96C8BE9CFD70E60C63 /* Pods_TestAVPlayer_TestAVPlayerUITests.framework */; };
 		ED0ED0C0A38B4C8278F8669D /* Pods_TestAVPlayerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 418260BB83E63C7B7E969038 /* Pods_TestAVPlayerTests.framework */; };
 /* End PBXBuildFile section */
@@ -84,6 +88,10 @@
 		678FAA82299511450024A1F0 /* UIImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageView.swift; sourceTree = "<group>"; };
 		679560F72995F791001FE378 /* ToolsBarTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsBarTableViewCell.swift; sourceTree = "<group>"; };
 		679560F82995F791001FE378 /* ToolsBarTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ToolsBarTableViewCell.xib; sourceTree = "<group>"; };
+		67BE8969299B211B006C80E2 /* NotificationName.enum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationName.enum.swift; sourceTree = "<group>"; };
+		67BE896C299B69F9006C80E2 /* ContentPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentPlayerView.swift; sourceTree = "<group>"; };
+		67BE896E299B6A11006C80E2 /* ContentPlayerView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ContentPlayerView.xib; sourceTree = "<group>"; };
+		67BE8970299B7049006C80E2 /* UIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIView.swift; sourceTree = "<group>"; };
 		72B79CB64E00C4C36F73584E /* Pods-TestAVPlayerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TestAVPlayerTests.release.xcconfig"; path = "Target Support Files/Pods-TestAVPlayerTests/Pods-TestAVPlayerTests.release.xcconfig"; sourceTree = "<group>"; };
 		A2C82973CA57E92D4AAD7087 /* Pods-TestAVPlayerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TestAVPlayerTests.debug.xcconfig"; path = "Target Support Files/Pods-TestAVPlayerTests/Pods-TestAVPlayerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		AFF579AA036762080C207F73 /* Pods_TestAVPlayer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TestAVPlayer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -143,6 +151,7 @@
 		675B63952991176F00ADF200 /* TestAVPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				67BE8968299B2100006C80E2 /* Enum */,
 				678FAA7F299510970024A1F0 /* Extension */,
 				678FAA782994FAD70024A1F0 /* Service */,
 				678FAA6B2994A6580024A1F0 /* Subclass */,
@@ -225,6 +234,8 @@
 			children = (
 				678FAA712994A9CB0024A1F0 /* VideoItem TableViewCell */,
 				67BC0B332995FAE800CA5073 /* ToolsBar TableViewCell */,
+				67BE896C299B69F9006C80E2 /* ContentPlayerView.swift */,
+				67BE896E299B6A11006C80E2 /* ContentPlayerView.xib */,
 			);
 			path = Template;
 			sourceTree = "<group>";
@@ -232,7 +243,7 @@
 		678FAA6B2994A6580024A1F0 /* Subclass */ = {
 			isa = PBXGroup;
 			children = (
-				678FAA772994CBDC0024A1F0 /* Button */,
+				67BE896B299B37CA006C80E2 /* Button */,
 				678FAA6E2994A8A80024A1F0 /* ViewController */,
 				678FAA6C2994A8830024A1F0 /* TableViewController */,
 			);
@@ -267,17 +278,9 @@
 		678FAA742994ABB70024A1F0 /* CustomCell */ = {
 			isa = PBXGroup;
 			children = (
-				678FAA722994AB380024A1F0 /* CustomCell.swift */,
 				678FAA752994ACAE0024A1F0 /* VideoItemCustomCell.swift */,
 			);
 			path = CustomCell;
-			sourceTree = "<group>";
-		};
-		678FAA772994CBDC0024A1F0 /* Button */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Button;
 			sourceTree = "<group>";
 		};
 		678FAA782994FAD70024A1F0 /* Service */ = {
@@ -292,6 +295,7 @@
 			isa = PBXGroup;
 			children = (
 				678FAA82299511450024A1F0 /* UIImageView.swift */,
+				67BE8970299B7049006C80E2 /* UIView.swift */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -311,6 +315,22 @@
 				679560F82995F791001FE378 /* ToolsBarTableViewCell.xib */,
 			);
 			path = "ToolsBar TableViewCell";
+			sourceTree = "<group>";
+		};
+		67BE8968299B2100006C80E2 /* Enum */ = {
+			isa = PBXGroup;
+			children = (
+				67BE8969299B211B006C80E2 /* NotificationName.enum.swift */,
+			);
+			path = Enum;
+			sourceTree = "<group>";
+		};
+		67BE896B299B37CA006C80E2 /* Button */ = {
+			isa = PBXGroup;
+			children = (
+				678FAA722994AB380024A1F0 /* CustomCell.swift */,
+			);
+			path = Button;
 			sourceTree = "<group>";
 		};
 		8D35C548F05C85A1A536CD0A /* Pods */ = {
@@ -446,6 +466,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				678FAA6829949C740024A1F0 /* VideoItemTableViewCell.xib in Resources */,
+				67BE896F299B6A11006C80E2 /* ContentPlayerView.xib in Resources */,
 				675B63A32991177000ADF200 /* LaunchScreen.storyboard in Resources */,
 				675B63A02991177000ADF200 /* Assets.xcassets in Resources */,
 				679560FA2995F791001FE378 /* ToolsBarTableViewCell.xib in Resources */,
@@ -580,7 +601,9 @@
 				675B639B2991176F00ADF200 /* ViewController.swift in Sources */,
 				678FAA702994A8CD0024A1F0 /* CustomViewController.swift in Sources */,
 				675B63972991176F00ADF200 /* AppDelegate.swift in Sources */,
+				67BE896A299B211B006C80E2 /* NotificationName.enum.swift in Sources */,
 				678FAA83299511450024A1F0 /* UIImageView.swift in Sources */,
+				67BE896D299B69F9006C80E2 /* ContentPlayerView.swift in Sources */,
 				678FAA63299499800024A1F0 /* ViewTableViewController.swift in Sources */,
 				678FAA762994ACAE0024A1F0 /* VideoItemCustomCell.swift in Sources */,
 				678FAA6729949C740024A1F0 /* VideoItemTableViewCell.swift in Sources */,
@@ -588,6 +611,7 @@
 				678FAA6A2994A4C30024A1F0 /* CustomTableViewController.swift in Sources */,
 				679560F92995F791001FE378 /* ToolsBarTableViewCell.swift in Sources */,
 				678FAA732994AB380024A1F0 /* CustomCell.swift in Sources */,
+				67BE8971299B7049006C80E2 /* UIView.swift in Sources */,
 				678FAA7C299507330024A1F0 /* VideoPlayer.swift in Sources */,
 				678FAA7E29950D820024A1F0 /* ViewModel.swift in Sources */,
 				675B63992991176F00ADF200 /* SceneDelegate.swift in Sources */,
