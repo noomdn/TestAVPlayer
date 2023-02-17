@@ -58,6 +58,21 @@ class ViewModel {
     }
     
     
+    func renderCurrentTimeframe(currentTime: CMTime) -> String{
+        let mins = CMTimeGetSeconds(currentTime) / 60
+        let secs = CMTimeGetSeconds(currentTime).truncatingRemainder(dividingBy: 60)
+        
+        let timeformatter = NumberFormatter()
+            timeformatter.minimumIntegerDigits = 2
+            timeformatter.minimumFractionDigits = 0
+            timeformatter.roundingMode = .down
+        guard let minsStr = timeformatter.string(from: NSNumber(value: mins)), let secsStr = timeformatter.string(from: NSNumber(value: secs)) else {
+            return ""
+        }
+        return "\(minsStr):\(secsStr)"
+    }
+    
+    
     // render table view cell
     func renderTableViewCell(_ tableView: UITableView, cellForRowAt indexPath: IndexPath ,customCell:CustomCell) -> UITableViewCell {
         let getCustomCell = customCell as! VideoItemCustomCell

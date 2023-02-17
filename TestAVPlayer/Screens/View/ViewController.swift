@@ -16,10 +16,18 @@ protocol ViewControllerDelegate:AnyObject {
     func selectedItem(selectedAt:Int)
 }
 
+class customSlider:UISlider {
+    override func draw(_ rect: CGRect) {
+        super.draw(rect)
+        
+    }
+}
+
 class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
     
     @IBOutlet weak var contentView: UIView!
     
+     
     public weak var viewControllerDelegate: ViewControllerDelegate?
     
     var testPlayerUrl = "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.mp4/.m3u8"
@@ -30,13 +38,19 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
     let viewModel = ViewModel()
     var timeObserver: Any?
     var isMuted = false
+    var isFullscreen = false
+     
+    @IBOutlet weak var contentViewLeftConstraint: NSLayoutConstraint!
+    @IBOutlet weak var contentViewTopConstraint: NSLayoutConstraint!
+    @IBOutlet weak var contentViewRightConstraint: NSLayoutConstraint!
+    @IBOutlet weak var contentViewHeightConstraint: NSLayoutConstraint!
     
+    @IBOutlet weak var containerView: UIView!
     var progressBarHighlightedObserver: NSKeyValueObservation?
-    
-    
-    
+     
     // video player layer
     lazy var playLayer:AVPlayerLayer = {
+         
         let playView = AVPlayerLayer()
         playView.contentsGravity = .resizeAspect
         playView.needsDisplayOnBoundsChange = true
@@ -96,9 +110,9 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         return btn
     }()
     
-    lazy var slider:UISlider = {
+    lazy var playbackSlider:UISlider = {
         let slider = UISlider()
-        
+         
         slider.translatesAutoresizingMaskIntoConstraints = false
         //slider.minimumTrackTintColor = .systemRed
         //slider.maximumTrackTintColor = .white
@@ -107,62 +121,31 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         slider.backgroundColor = .clear
         slider.value = 0.0
         slider.isContinuous = false
-        slider.addTarget(self, action: #selector(didSliderChange), for: .valueChanged)
-        
-        //slider.addTarget(self, action: #selector(didSliderChange), for: .)
-        
-        // not working..
+          
         progressBarHighlightedObserver = slider.observe(\UISlider.isTracking ,options: [.old,.new]) { slider, change in
             if let newValue = change.newValue {
-                print("new value....")
+                self.updateSlider(isTracking: newValue)
             }
         }
-         
         return slider
     }()
+     
     
-    /*
-    lazy var toolsBar:UIStackView = {
-        let emptyView = UIView()
-        emptyView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let emptyView2 = UIView()
-        emptyView2.translatesAutoresizingMaskIntoConstraints = false
-        emptyView2.backgroundColor = .systemRed
-         
-        // center stack view
-        let centerStackView = UIStackView(arrangedSubviews: [previosPlayButton,playButton ,nextPlayButton])
-        centerStackView.spacing = 10.0
-        centerStackView.axis = .horizontal
-        centerStackView.alignment = .fill
-        centerStackView.distribution = .fillEqually
-         
-        // bottom stack view
-        let bottomStackView = UIStackView(arrangedSubviews: [slider])
-        bottomStackView.translatesAutoresizingMaskIntoConstraints = false
-        bottomStackView.backgroundColor = .clear
-        bottomStackView.axis = .horizontal
-        bottomStackView.alignment = .fill
-        bottomStackView.distribution = .fill
-         
-        // main stack view
-        let mainStackView = UIStackView(arrangedSubviews: [emptyView,centerStackView,bottomStackView])
-        mainStackView.spacing = 10.0
-        mainStackView.axis = .vertical
-        mainStackView.alignment = .fill
-        mainStackView.distribution = .fillEqually
-        mainStackView.translatesAutoresizingMaskIntoConstraints = false
-        mainStackView.backgroundColor = .clear
-        
-        return mainStackView
+    lazy var fullscreenButton:UIButton = {
+        let btn = UIButton()
+        btn.addTarget(self, action: #selector(didFullscree), for: .touchUpInside)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.setImage(UIImage(systemName: "arrow.up.left.and.arrow.down.right"), for: .normal)
+        btn.tintColor = .white
+        return btn
     }()
-    */
     
     lazy var timeLabel:UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
         label.font = .systemFont(ofSize: CGFloat(12.0))
+        label.text = "00:00 / 00:00" //default
         return label
     }()
     
@@ -177,17 +160,24 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         
         return mainStackView
     }()
+     
+    lazy var topStackView:UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [fullscreenButton])
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.distribution = .fill
+        stackView.alignment = .fill
+        stackView.backgroundColor = .clear
+        return stackView
+    }()
     
     lazy var bottomBarStackView:UIStackView = {
-        
-        timeLabel.text = "00:00 / 00:00"
-        
         let emptyView = UIView()
         
         let topStackView = UIStackView(arrangedSubviews: [timeLabel,emptyView,muteButton])
         topStackView.axis = .horizontal
         
-        let mainStackView = UIStackView(arrangedSubviews: [topStackView,slider])
+        let mainStackView = UIStackView(arrangedSubviews: [topStackView,playbackSlider])
         mainStackView.translatesAutoresizingMaskIntoConstraints = false
         mainStackView.axis = .vertical
         mainStackView.distribution = .fillEqually
@@ -200,19 +190,30 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         
         return mainStackView
     }()
-      
+       
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupAudio()
     }
      
     // hidden animate
     func onHiddenToolsbar(){
         self.controllerStackView.alpha = CGFloat(1.0)
+        self.playbackSlider.thumbTintColor = .systemRed
+        self.fullscreenButton.alpha = 1.0
+        self.muteButton.alpha = 1.0
         UIView.animate(withDuration: 0.2 ,delay: 2.0 ,options: .curveEaseOut) {
             self.controllerStackView.alpha = CGFloat(0.0)
+            self.fullscreenButton.alpha = 0.0
+            self.playbackSlider.thumbTintColor = .clear
+            self.muteButton.alpha = 0.0
         } completion: { isSuccess in
             self.controllerStackView.alpha = CGFloat(0.0)
+            self.fullscreenButton.alpha = 0.0
+            self.playbackSlider.thumbTintColor = .clear
+            self.playbackSlider.isEnabled = false
+            self.muteButton.alpha = 0.0
         }
     }
     
@@ -230,12 +231,16 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         super.viewDidAppear(animated)
         setupController()
     }
-    
+      
     func setupController(){
-         
-        
+          
         self.playLayer.frame = self.contentView.bounds
         self.contentView.layer.addSublayer(self.playLayer)
+         
+        contentView.addSubview(topStackView)
+        topStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: CGFloat(10)).isActive = true
+        topStackView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: -CGFloat(10)).isActive = true
+        topStackView.heightAnchor.constraint(equalToConstant: CGFloat(50)).isActive = true
         
         // setup tools bar df
         contentView.addSubview(controllerStackView)
@@ -262,11 +267,29 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         let location = touch.location(in: self.contentView)
         if isTouched == false {
             if self.contentView.frame.contains(location) {
+                // contorller stack view
                 self.controllerStackView.alpha = CGFloat(1.0)
+                // playback slider
+                self.playbackSlider.thumbTintColor = .systemRed
+                self.playbackSlider.isEnabled = true
+                // mute button
+                self.muteButton.alpha = 1.0
+                // fullscreen button
+                self.fullscreenButton.alpha = 1.0
+                
                 isTouched = true
                 
                 DispatchQueue.main.asyncAfter(deadline: .now()+3){
+                    // controller stack view
                     self.controllerStackView.alpha = CGFloat(0.0)
+                    // playback slider
+                    self.playbackSlider.thumbTintColor = .clear
+                    self.playbackSlider.isEnabled = false
+                    // mute button
+                    self.muteButton.alpha = 0.0
+                    // fullscreen button
+                    self.fullscreenButton.alpha = 0.0
+                    
                     self.isTouched = false
                 }
             }
@@ -282,10 +305,64 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         super.viewDidDisappear(animated)
     }
     
-    @objc func didSliderChange(sender:UISlider){
-        print("== didSliderChange ==")
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .all
     }
     
+    override var shouldAutorotate: Bool {
+        return true
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        
+        self.playLayer.videoGravity = .resizeAspect
+        self.playLayer.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        self.view.layoutIfNeeded()
+         
+    }
+    
+    @objc func didFullscree(sender:UIButton){
+       
+        if isFullscreen == false {
+            if #available(iOS 16.0, *) {
+                (UIApplication.shared.delegate as? AppDelegate)?.orientation = .landscapeRight
+                let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+                windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
+                setNeedsUpdateOfSupportedInterfaceOrientations()
+            }else{
+                UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+            }
+            
+            sender.setImage(UIImage(systemName: "arrow.down.right.and.arrow.up.left"), for: .normal)
+            isFullscreen = true
+
+            let screen = UIScreen.main.bounds
+            self.view.bringSubviewToFront(self.contentView)
+            contentViewLeftConstraint.constant = CGFloat(0)
+            contentViewTopConstraint.constant = CGFloat(0)
+            contentViewRightConstraint.constant = CGFloat(0)
+            contentViewHeightConstraint.constant = CGFloat(screen.height - 120)
+            self.view.backgroundColor = .black
+            self.view.layoutIfNeeded()
+
+        } else {
+            isFullscreen = false
+            self.contentView.bringSubviewToFront(self.view)
+            contentViewLeftConstraint.constant = CGFloat(10.0)
+            contentViewTopConstraint.constant = CGFloat(10.0)
+            contentViewRightConstraint.constant = CGFloat(10.0)
+            contentViewHeightConstraint.constant = CGFloat(300.0)
+
+            self.view.backgroundColor = .white
+            self.view.layoutIfNeeded()
+
+            self.playLayer.frame = self.contentView.bounds
+            self.view.layoutIfNeeded()
+        }
+        
+        
+    }
+     
     @objc func didMuted(sender:UIButton){
         if isMuted == false {
             sender.setImage(UIImage(systemName: "speaker.fill"), for: .normal)
@@ -336,26 +413,7 @@ class ViewController: CustomViewController ,AVPlayerViewControllerDelegate {
         playLayer.player?.play()
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "addVideoItem" {
-            let vc = segue.destination as! ViewTableViewController
-            vc.viewTableViewControllerDelegate = self
-        }
-    }
-}
-
-
-extension ViewController: ViewTableViewControllerDelegate {
-    
-    
-    
-    func onLoadPlayerItem(playerURLs:[String]){
-        self.playerURLs = playerURLs
-    }
-    
-    
-    func selectedVideo(playerURL: String, indexPath: Int) {
-         
+    private func onResetPlayerControl(){
         // reset player
         playLayer.player = nil
         
@@ -370,18 +428,82 @@ extension ViewController: ViewTableViewControllerDelegate {
         // setup previos button
         previosPlayButton.alpha = 0.0
         
+        // setup playback slider
+        playbackSlider.alpha = 0.0
+        
+        // setup fullscreen button
+        fullscreenButton.alpha = 0.0
+        
+        // setup mute button
+        muteButton.alpha = 0.0
+    }
+    
+    private func onSetPlayerControl(){
+        playButton.configuration?.showsActivityIndicator = false
+        playButton.configuration = playBtnConfig
+        playButton.addTarget(self, action: #selector(didPlayVideo), for: .touchUpInside)
+        
+        // setup next button
+        nextPlayButton.alpha = 1.0
+        
+        // setup previos button
+        previosPlayButton.alpha = 1.0
+        
+        // setup playback slider
+        playbackSlider.alpha = 1.0
+        
+        // setup fullscreen button
+        fullscreenButton.alpha = 1.0
+        
+        // setup mute button
+        muteButton.alpha = 1.0
+        
+        onPlayVideo()
+        
+        // sound off = (true)
+        // sound on = (false)
+        //player.isMuted = isMuted
+        
+        
+        
+        onHiddenToolsbar()
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "addVideoItem" {
+            let vc = segue.destination as! ViewTableViewController
+            vc.viewTableViewControllerDelegate = self
+        }
+    }
+}
+
+
+extension ViewController: ViewTableViewControllerDelegate {
+     
+    func onLoadPlayerItem(playerURLs:[String]){
+        self.playerURLs = playerURLs
+    }
+    
+    func selectedVideo(playerURL: String, indexPath: Int) {
+         
+        self.onResetPlayerControl()
+         
+         
         // index item
         self.currentPlayVideo = indexPath
-        
+        dump( playerURL )
         //setup new video player
-        viewModel.renderVideoPlayer(playerUrl: self.testPlayerUrl) { player in
+        viewModel.renderVideoPlayer(playerUrl: playerURL) { player in
+        //viewModel.renderVideoPlayer(playerUrl: self.testPlayerUrl) { player in
             
             if player.status == .readyToPlay {
                 
                 self.playLayer.player = player
+                
+                //self.playLayer.contentsGravity
                  
-                self.slider.minimumValue = 0.0
-                self.slider.maximumValue = Float(CMTimeGetSeconds( (player.currentItem?.asset.duration)! ) )
+                self.playbackSlider.minimumValue = 0.0
+                self.playbackSlider.maximumValue = Float(CMTimeGetSeconds( (player.currentItem?.asset.duration)! ) )
                 
                 guard let totalCurrentTime = (player.currentItem?.asset.duration) else { return }
                 let mins = CMTimeGetSeconds(totalCurrentTime) / 60
@@ -394,70 +516,62 @@ extension ViewController: ViewTableViewControllerDelegate {
                 guard let minsStr = timeformatter.string(from: NSNumber(value: mins)), let secsStr = timeformatter.string(from: NSNumber(value: secs)) else {
                     return
                 }
+                
                 self.totalTime = "\(minsStr):\(secsStr)"
-                
-                
+                 
                 let interval = CMTime(seconds: 0.1, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
                 self.timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main, using: { time in
                     // update slider bar
-                    self.updateslider(palyer: player)
+                    self.updateSlider(isTracking: false)
                 })
-                 
-                
-                /*
-                 // get current time
-                 guard let currentTime = player?.currentTime() else { return }
-                     let currentTimeInSeconds = CMTimeGetSeconds(currentTime)
-                 //
-                 */
-                
+                  
                 DispatchQueue.main.async { [self] in
-                    playButton.configuration?.showsActivityIndicator = false
-                    playButton.configuration = playBtnConfig
-                    playButton.addTarget(self, action: #selector(didPlayVideo), for: .touchUpInside)
-                    
-                    // setup next button
-                    nextPlayButton.alpha = 1.0
-                    
-                    // setup previos button
-                    previosPlayButton.alpha = 1.0
-                    
-                    self.onPlayVideo()
-                    
-                    //  sound off = (true)
-                    // sound on = (false)
-                    player.isMuted = isMuted
-                    
-                    self.onHiddenToolsbar()
+                    onSetPlayerControl()
                 }
             }
             
         } onError: { error in
             debugPrint(error)
         }
-        
+         
     }
     
-    func updateslider(palyer:AVPlayer?){
-        guard let currentTime = (palyer?.currentItem?.currentTime()) else { return }
+    func updateSlider(isTracking:Bool){
         
-        let mins = CMTimeGetSeconds(currentTime) / 60
-        let secs = CMTimeGetSeconds(currentTime).truncatingRemainder(dividingBy: 60)
-        
-        let timeformatter = NumberFormatter()
-            timeformatter.minimumIntegerDigits = 2
-            timeformatter.minimumFractionDigits = 0
-            timeformatter.roundingMode = .down
-        guard let minsStr = timeformatter.string(from: NSNumber(value: mins)), let secsStr = timeformatter.string(from: NSNumber(value: secs)) else {
-            return
+        if isTracking {
+            // pause
+            //self.playLayer.player?.pause()
+            
+            // get value
+            let timeSeconds = self.playbackSlider.value // get current value
+            let timescale = 1 // for 1 seconds.
+            
+            // cover to CMTime
+            let seekTime = CMTimeMakeWithSeconds(Float64(timeSeconds), preferredTimescale: Int32(timescale))
+             
+            let getCurrentTime = viewModel.renderCurrentTimeframe(currentTime: seekTime)
+            
+            // show the current time in the label.
+            self.timeLabel.text = "\(getCurrentTime) / \(self.totalTime)"
+            
+            self.playLayer.player?.seek(to: seekTime, toleranceBefore: .zero, toleranceAfter: .zero, completionHandler: { isFinished in
+                if isFinished {
+                    self.playLayer.player?.play()
+                }
+            })
+        } else {
+            
+            guard let currentTime = (self.playLayer.player?.currentItem?.currentTime()) else { return }
+            
+            let getCurrentTime = viewModel.renderCurrentTimeframe(currentTime: currentTime)
+              
+            // show the current time in the label.
+            self.timeLabel.text = "\(getCurrentTime) / \(self.totalTime)"
+            
+            // input to the slider
+            self.playbackSlider.value = Float(CMTimeGetSeconds(currentTime))
         }
-        
-        // show the current time in the label.
-        self.timeLabel.text = "\(minsStr):\(secsStr) / \(self.totalTime)"
-        
-        // input to the slider
-        self.slider.value = Float(CMTimeGetSeconds(currentTime))
-          
+         
     }
     
 }

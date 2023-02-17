@@ -47,7 +47,7 @@ class ViewTableViewController: CustomTableViewController {
             self.tableView.reloadData()
             
             // default selected
-            DispatchQueue.main.asyncAfter(deadline: .now()){
+            DispatchQueue.main.asyncAfter(deadline: .now()+3){
                 self.tableView(self.tableView, didSelectRowAt: IndexPath(row: 0, section: 0))
             }
             
@@ -110,11 +110,11 @@ class ViewTableViewController: CustomTableViewController {
                 let getCell = tableView.cellForRow(at: indexPath) as! VideoItemTableViewCell
                 getCell.setupPlaying()
                 
-                if isFirstStart == true {
-                    self.isFirstStart = false
-                    self.tableView(self.tableView, didDeselectRowAt: IndexPath(row: 0, section: 0) )
-                }
-                
+//                if isFirstStart == true {
+//                    self.isFirstStart = false
+//                    self.tableView(self.tableView, didDeselectRowAt: IndexPath(row: 0, section: 0) )
+//                }
+//
                 // save the selected index
                 oldSelected = indexPath.row
                 
